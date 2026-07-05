@@ -1,7 +1,5 @@
 ![Logo](github/logo.png)
 
-# Global Minecraft Skin Manager
-
 ## What it is
 A simple tool for Windows and Linux that lets premium Minecraft players manage and change their skins.
 

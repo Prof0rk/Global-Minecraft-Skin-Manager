@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Minecraft Skin Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Silkscreen:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="waves-container">
+    <svg class="bg-waves" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 800" preserveAspectRatio="none">
+      <path class="wave-path wave-1" d="M0,200 C300,100 600,300 900,150 C1200,50 1350,180 1440,120 L1440,800 L0,800 Z" />
+      <path class="wave-path wave-2" d="M0,250 C400,180 700,280 1000,180 C1300,80 1380,220 1440,160 L1440,800 L0,800 Z" />
+      <path class="wave-path wave-3" d="M0,150 C200,80 500,240 800,120 C1100,50 1300,160 1440,100 L1440,800 L0,800 Z" />
+    </svg>
+  </div>
+
+  <div class="app-container">
+    <aside class="sidebar glass-panel">
+      <div class="logo-area">
+        <div class="logo-pixel-box">GM</div>
+        <div class="logo-text">
+          <h1>SKIN MANAGER</h1>
+        </div>
+      </div>
+
+      <div class="account-panel-container">
+        <div class="account-card glass-panel" id="account-card" title="Click to manage accounts">
+          <div class="profile-info-loading" id="profile-loading-indicator">
+            <div class="spinner"></div>
+            <span>Loading Account...</span>
+          </div>
+          
+          <div class="profile-info-signed-out" id="profile-signed-out">
+            <div class="guest-avatar">?</div>
+            <div class="auth-details">
+              <span class="profile-name">Guest Profile</span>
+              <span class="profile-status">Not Authenticated</span>
+            </div>
+            <button class="login-btn pixel-btn" id="login-button">LOG IN</button>
+          </div>
+
+          <div class="profile-info-signed-in hidden" id="profile-signed-in">
+            <div class="avatar-container">
+              <img class="minecraft-avatar" id="player-avatar" src="https://mc-heads.net/avatar/steve/64" alt="Player Avatar">
+            </div>
+            <div class="auth-details">
+              <span class="profile-name" id="player-name">Player</span>
+              <span class="profile-status text-glow-green">Premium Active</span>
+            </div>
+            <div class="dropdown-indicator">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="accounts-dropdown glass-panel hidden" id="accounts-dropdown">
+          <div class="dropdown-header">SWITCH PROFILE</div>
+          <div class="accounts-list" id="accounts-list"></div>
+          <button class="add-account-btn" id="add-account-button">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="3" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>ADD ACCOUNT</span>
+          </button>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" id="tab-gallery">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>SKINS GALLERY</span>
+        </button>
+        <button class="nav-item" id="tab-upload">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          <span>UPLOAD SKIN</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span>Linux v1.0.0</span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <section class="content-section" id="section-gallery">
+        <div class="section-header">
+          <h2>SKIN LIBRARY</h2>
+          <span class="section-desc">Select a skin from your local project database to preview and apply it.</span>
+        </div>
+        
+        <div class="skins-grid-container">
+          <div class="skins-grid" id="skins-grid"></div>
+          
+          <div class="empty-state hidden" id="skins-empty-state">
+            <div class="empty-icon">📁</div>
+            <h3>No skins in project yet</h3>
+            <p>Go to the "Upload Skin" tab to add your first PNG skin file.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section hidden" id="section-upload">
+        <div class="section-header">
+          <h2>UPLOAD NEW SKIN</h2>
+          <span class="section-desc">Import a custom Minecraft skin file (.png) into your project library.</span>
+        </div>
+
+        <form class="upload-form glass-panel" id="upload-skin-form">
+          <div class="form-group">
+            <label for="skin-file-input">Skin Image File (.png)</label>
+            <div class="file-drag-zone" id="drop-zone">
+              <input type="file" id="skin-file-input" accept="image/png" required>
+              <div class="drag-zone-text">
+                <svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <p class="primary-text">Drag & drop your PNG skin here or <span class="browse-link">browse</span></p>
+                <p class="secondary-text">Standard 64x64 or 64x32 Minecraft skin format</p>
+              </div>
+            </div>
+            <div class="file-selected-indicator hidden" id="file-selected-info">
+              <span class="file-name" id="selected-file-name">my_cool_skin.png</span>
+              <button type="button" class="remove-file-btn" id="clear-file-btn">Remove</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="skin-name-input">Skin Display Name</label>
+            <input type="text" id="skin-name-input" placeholder="e.g. Neon Creeper, Cyber Punk Steve..." required>
+          </div>
+
+          <div class="form-group">
+            <label>Model Variant</label>
+            <div class="variant-options">
+              <label class="variant-card glass-panel active">
+                <input type="radio" name="variant" value="classic" checked>
+                <span class="model-badge">CLASSIC</span>
+                <span class="variant-desc">Standard 4px wide arms (Steve model)</span>
+              </label>
+              <label class="variant-card glass-panel">
+                <input type="radio" name="variant" value="slim">
+                <span class="model-badge">SLIM</span>
+                <span class="variant-desc">Thinner 3px wide arms (Alex model)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="submit-btn pixel-btn" id="upload-submit-btn">UPLOAD</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <section class="preview-panel glass-panel hidden" id="preview-panel">
+      <div class="preview-header">
+        <h3 class="panel-title">3D PREVIEW</h3>
+      </div>
+
+      <div class="skin-canvas-container" id="canvas-container">
+        <canvas id="skin-viewer-canvas"></canvas>
+      </div>
+
+      <div class="viewer-controls">
+        <div class="viewer-skin-name-title" id="viewer-skin-name">Default Steve</div>
+        <div class="control-row">
+          <label class="toggle-control">
+            <input type="checkbox" id="control-rotate" checked>
+            <span class="toggle-label">Auto Rotate</span>
+          </label>
+          <div class="model-info-tag" id="selected-variant-tag">CLASSIC</div>
+        </div>
+
+        <div class="control-row anim-selector-row">
+          <span class="control-label">Animation:</span>
+          <select id="control-animation" class="glass-select">
+            <option value="none">None (T-Pose)</option>
+            <option value="walk" selected>Walking</option>
+            <option value="run">Running</option>
+            <option value="idle">Idle Breath</option>
+            <option value="fly">Flying</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="apply-action-area">
+        <button class="apply-btn pixel-btn disabled" id="apply-to-minecraft-btn" disabled>
+          APPLY SKIN TO MINECRAFT
+        </button>
+        <p class="action-status-msg" id="apply-status-text">Log in to update your Minecraft premium skin</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-overlay hidden" id="device-login-modal">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3>Microsoft Account Authentication</h3>
+        <button class="modal-close-btn" id="close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-instructions">To authenticate, Microsoft requires you to log in on their portal. Please follow the instructions below:</p>
+        
+        <div class="device-code-box">
+          <span class="code-label">VERIFICATION CODE</span>
+          <h2 class="device-code-value" id="modal-device-code">---- ----</h2>
+        </div>
+
+        <div class="modal-steps">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-desc">
+              Go to the Microsoft device login page:<br>
+              <a href="https://microsoft.com/link" target="_blank" class="microsoft-link" id="modal-link-btn">microsoft.com/link</a>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-desc">Enter the verification code shown above.</div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-desc">Sign in with your Microsoft account credentials. Once finished, this app will automatically refresh.</div>
+          </div>
+        </div>
+
+        <div class="modal-loader">
+          <div class="spinner"></div>
+          <span>Waiting for authentication...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-notification hidden" id="toast">
+    <div class="toast-content">
+      <span class="toast-message" id="toast-message">Notification details</span>
+    </div>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

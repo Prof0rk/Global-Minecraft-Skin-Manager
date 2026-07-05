@@ -1,10 +1,14 @@
 import * as skinview3d from 'https://cdn.jsdelivr.net/npm/skinview3d@3.4.2/+esm';
 const tabGallery = document.getElementById('tab-gallery');
+const tabCapes = document.getElementById('tab-capes');
 const tabUpload = document.getElementById('tab-upload');
 const sectionGallery = document.getElementById('section-gallery');
+const sectionCapes = document.getElementById('section-capes');
 const sectionUpload = document.getElementById('section-upload');
 const skinsGrid = document.getElementById('skins-grid');
 const skinsEmptyState = document.getElementById('skins-empty-state');
+const capesGrid = document.getElementById('capes-grid');
+const capesEmptyState = document.getElementById('capes-empty-state');
 const uploadForm = document.getElementById('upload-skin-form');
 const fileInput = document.getElementById('skin-file-input');
 const dropZone = document.getElementById('drop-zone');
@@ -67,15 +71,34 @@ async function isElectronPlatform() {
 }
 tabGallery.addEventListener('click', () => {
   tabGallery.classList.add('active');
+  tabCapes.classList.remove('active');
   tabUpload.classList.remove('active');
   sectionGallery.classList.remove('hidden');
+  sectionCapes.classList.add('hidden');
   sectionUpload.classList.add('hidden');
+  if (selectedSkin) {
+    previewPanel.classList.remove('hidden');
+    setTimeout(resizeCanvas, 0);
+  }
+});
+tabCapes.addEventListener('click', () => {
+  tabCapes.classList.add('active');
+  tabGallery.classList.remove('active');
+  tabUpload.classList.remove('active');
+  sectionCapes.classList.remove('hidden');
+  sectionGallery.classList.add('hidden');
+  sectionUpload.classList.add('hidden');
+  previewPanel.classList.add('hidden');
+  renderCapes();
 });
 tabUpload.addEventListener('click', () => {
   tabUpload.classList.add('active');
   tabGallery.classList.remove('active');
+  tabCapes.classList.remove('active');
   sectionUpload.classList.remove('hidden');
   sectionGallery.classList.add('hidden');
+  sectionCapes.classList.add('hidden');
+  previewPanel.classList.add('hidden');
 });
 ['dragenter', 'dragover'].forEach(eventName => {
   dropZone.addEventListener(eventName, (e) => {
@@ -126,10 +149,8 @@ radioButtons.forEach(radio => {
   });
 });
 const resizeCanvas = () => {
-  if (!canvasContainer || !skinViewerCanvas) return;
+  if (!canvasContainer) return;
   const rect = canvasContainer.getBoundingClientRect();
-  skinViewerCanvas.width = rect.width;
-  skinViewerCanvas.height = rect.height;
   if (skinViewerInstance) {
     skinViewerInstance.setSize(rect.width, rect.height);
   }
@@ -220,6 +241,26 @@ function drawSkin2D(canvas, imageUrl, isSlim) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   };
 }
+function drawCape2D(canvas, imageUrl) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = imageUrl;
+  img.onload = () => {
+    canvas.width = 60;
+    canvas.height = 96;
+    ctx.imageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+    const srcX = (img.width === 22) ? 1 : 2;
+    ctx.drawImage(img, srcX, 1, 10, 16, 0, 0, canvas.width, canvas.height);
+  };
+  img.onerror = () => {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  };
+}
 async function fetchSkins() {
   try {
     const res = await fetch('/api/skins');
@@ -267,6 +308,121 @@ function renderSkins() {
     skinsGrid.appendChild(card);
   });
 }
+function renderCapes() {
+  capesGrid.innerHTML = '';
+  if (!isLoggedIn || !currentProfile) {
+    capesEmptyState.classList.remove('hidden');
+    capesEmptyState.querySelector('h3').textContent = 'Not logged in';
+    capesEmptyState.querySelector('p').textContent = 'Please log in with a Premium account to view your capes.';
+    return;
+  }
+  const capes = currentProfile.capes || [];
+  capesEmptyState.classList.add('hidden');
+  const noneActive = !capes.some(c => c.state === 'ACTIVE');
+  const noneCard = document.createElement('div');
+  noneCard.className = 'cape-card';
+  if (noneActive) {
+    noneCard.classList.add('selected');
+  }
+  noneCard.innerHTML = `
+    <div class="cape-card-canvas-container">
+      <canvas class="cape-card-canvas" id="canvas-cape-none"></canvas>
+    </div>
+    <div class="cape-name">No Cape</div>
+    <div class="cape-card-actions">
+      <button class="card-action-btn select-cape-btn" data-id="none" ${noneActive ? 'disabled' : ''}>
+        ${noneActive ? 'ACTIVE' : 'SELECT'}
+      </button>
+    </div>
+  `;
+  setTimeout(() => {
+    const c = document.getElementById('canvas-cape-none');
+    if (c) {
+      c.width = 60;
+      c.height = 96;
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, c.width, c.height);
+      ctx.strokeStyle = 'rgba(255, 77, 109, 0.7)';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      const cx = c.width / 2;
+      const cy = c.height / 2;
+      const r = 20;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.beginPath();
+      const angle = Math.PI / 4;
+      const dx = r * Math.cos(angle);
+      const dy = r * Math.sin(angle);
+      ctx.moveTo(cx - dx, cy - dy);
+      ctx.lineTo(cx + dx, cy + dy);
+      ctx.stroke();
+    }
+  }, 20);
+  noneCard.querySelector('.select-cape-btn').addEventListener('click', () => equipCape('none'));
+  capesGrid.appendChild(noneCard);
+  capes.forEach(cape => {
+    const card = document.createElement('div');
+    card.className = 'cape-card';
+    const isActive = cape.state === 'ACTIVE';
+    if (isActive) {
+      card.classList.add('selected');
+    }
+    card.innerHTML = `
+      <div class="cape-card-canvas-container">
+        <canvas class="cape-card-canvas" id="canvas-cape-${cape.id}"></canvas>
+      </div>
+      <div class="cape-name">${escapeHTML(cape.alias)}</div>
+      <div class="cape-card-actions">
+        <button class="card-action-btn select-cape-btn" data-id="${cape.id}" ${isActive ? 'disabled' : ''}>
+          ${isActive ? 'ACTIVE' : 'SELECT'}
+        </button>
+      </div>
+    `;
+    setTimeout(() => {
+      const c = document.getElementById(`canvas-cape-${cape.id}`);
+      if (c) drawCape2D(c, cape.url);
+    }, 20);
+    const selectBtn = card.querySelector('.select-cape-btn');
+    selectBtn.addEventListener('click', () => equipCape(cape.id));
+    capesGrid.appendChild(card);
+  });
+}
+async function equipCape(capeId) {
+  if (!isLoggedIn) return;
+  const selectBtn = document.querySelector(`.select-cape-btn[data-id="${capeId}"]`);
+  if (selectBtn) {
+    selectBtn.disabled = true;
+    selectBtn.textContent = 'EQUIPPING...';
+  }
+  try {
+    const res = await fetch('/api/capes/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ capeId })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to equip cape.');
+    }
+    const data = await res.json();
+    currentProfile = data.profile;
+    updateAuthDisplay();
+    if (skinViewerInstance && selectedSkin) {
+      const activeCape = currentProfile?.capes?.find(c => c.state === 'ACTIVE');
+      if (activeCape) {
+        skinViewerInstance.loadCape(activeCape.url);
+      } else {
+        skinViewerInstance.loadCape(null);
+      }
+    }
+    showToast('Cape equipped successfully!', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+    updateAuthDisplay();
+  }
+}
 function selectSkin(skin) {
   selectedSkin = skin;
   document.querySelectorAll('.skin-card').forEach(card => {
@@ -284,6 +440,12 @@ function selectSkin(skin) {
     skinViewerInstance.loadSkin(skin.url, {
       model: skin.variant === 'slim' ? 'slim' : 'default'
     });
+    const activeCape = currentProfile?.capes?.find(c => c.state === 'ACTIVE');
+    if (activeCape) {
+      skinViewerInstance.loadCape(activeCape.url);
+    } else {
+      skinViewerInstance.loadCape(null);
+    }
   }
   updateApplyBtnState();
 }
@@ -309,6 +471,7 @@ function resetToDefaultPreview() {
   selectedVariantTag.textContent = 'CLASSIC';
   if (skinViewerInstance) {
     skinViewerInstance.loadSkin(DEFAULT_SKIN_URL, { model: 'default' });
+    skinViewerInstance.loadCape(null);
   }
   previewPanel.classList.add('hidden');
   updateApplyBtnState();
@@ -520,6 +683,7 @@ function updateAuthDisplay() {
   }
   renderAccountsList();
   updateApplyBtnState();
+  renderCapes();
 }
 async function triggerLogin() {
   const isElectron = await isElectronPlatform();

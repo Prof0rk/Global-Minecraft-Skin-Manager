@@ -245,7 +245,7 @@ async function getMinecraftProfile(mcToken) {
   }
   if (!res.ok) {
     const errorText = await res.text();
-    throw new Error(`Failed to fetch Minecraft profile: ${errorText}`);
+    throw new Error(`Failed to fetch Minecraft profile (Status ${res.status} ${res.statusText}): ${errorText}`);
   }
   return await res.json();
 }
@@ -497,6 +497,55 @@ app.post('/api/auth/logout', (req, res) => {
     activeUuid: activeAccountUuid
   });
 });
+app.post('/api/capes/apply', async (req, res) => {
+  const { capeId } = req.body;
+  const activeAcc = getActiveAccount();
+  if (!activeAcc) {
+    return res.status(401).json({ error: 'Not authenticated.' });
+  }
+  try {
+    const mcToken = await ensureAuthenticated();
+    if (!capeId || capeId === 'none') {
+      const deleteRes = await fetch('https://api.minecraftservices.com/minecraft/profile/capes/active', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${mcToken}`
+        }
+      });
+      if (!deleteRes.ok) {
+        const errText = await deleteRes.text();
+        throw new Error(`Mojang API error (Status ${deleteRes.status} ${deleteRes.statusText}): ${errText}`);
+      }
+    } else {
+      const applyRes = await fetch('https://api.minecraftservices.com/minecraft/profile/capes/active', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${mcToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ capeId })
+      });
+      if (!applyRes.ok) {
+        const errText = await applyRes.text();
+        throw new Error(`Mojang API error (Status ${applyRes.status} ${applyRes.statusText}): ${errText}`);
+      }
+    }
+    if (activeAcc.profile && activeAcc.profile.capes) {
+      activeAcc.profile.capes.forEach(c => {
+        c.state = (c.id === capeId) ? 'ACTIVE' : 'INACTIVE';
+      });
+    }
+    saveSession();
+    res.json({
+      success: true,
+      message: (!capeId || capeId === 'none') ? 'Cape unequipped successfully!' : 'Cape successfully equipped!',
+      profile: activeAcc.profile
+    });
+  } catch (err) {
+    console.error('Failed to update cape status:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 app.get('/api/skins', (req, res) => {
   const activeAcc = getActiveAccount();
   const playerUuid = activeAcc ? activeAcc.uuid : 'guest';
@@ -605,13 +654,19 @@ app.post('/api/skins/apply/:id', async (req, res) => {
       const errText = await applyRes.text();
       throw new Error(`Mojang API error: ${errText}`);
     }
-    const profile = await getMinecraftProfile(mcToken);
-    activeAcc.profile = profile;
+    if (activeAcc.profile) {
+      activeAcc.profile.skins = [{
+        id: skin.id,
+        state: 'ACTIVE',
+        url: `/skins/${skin.filename}`,
+        variant: skin.variant
+      }];
+    }
     saveSession();
     res.json({
       success: true,
       message: 'Skin successfully applied to Minecraft Premium!',
-      profile: profile
+      profile: activeAcc.profile
     });
   } catch (err) {
     console.error('Failed to apply skin:', err);

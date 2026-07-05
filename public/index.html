@@ -72,6 +72,10 @@
           <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           <span>SKINS GALLERY</span>
         </button>
+        <button class="nav-item" id="tab-capes">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span>CAPES GALLERY</span>
+        </button>
         <button class="nav-item" id="tab-upload">
           <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
           <span>UPLOAD SKIN</span>
@@ -79,7 +83,7 @@
       </nav>
 
       <div class="sidebar-footer">
-        <span>Linux v1.0.0</span>
+        <span>v1.0.1</span>
       </div>
     </aside>
 
@@ -97,6 +101,23 @@
             <div class="empty-icon">📁</div>
             <h3>No skins in project yet</h3>
             <p>Go to the "Upload Skin" tab to add your first PNG skin file.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section hidden" id="section-capes">
+        <div class="section-header">
+          <h2>CAPES GALLERY</h2>
+          <span class="section-desc">Select a cape associated with your premium account to equip it.</span>
+        </div>
+        
+        <div class="skins-grid-container">
+          <div class="skins-grid" id="capes-grid"></div>
+          
+          <div class="empty-state hidden" id="capes-empty-state">
+            <div class="empty-icon">🛡️</div>
+            <h3>No capes found</h3>
+            <p>Log in with a Premium account containing Minecraft capes to display them here.</p>
           </div>
         </div>
       </section>

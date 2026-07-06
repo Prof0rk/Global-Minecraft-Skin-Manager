@@ -546,6 +546,212 @@ app.post('/api/capes/apply', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+function scrapeUrlViaElectron(url) {
+  return new Promise((resolve, reject) => {
+    const { BrowserWindow, app } = require('electron');
+    const win = new BrowserWindow({
+      show: false,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true
+      }
+    });
+    const handleCert = (event, webContents, url, list, callback) => {
+      event.preventDefault();
+      callback(null);
+    };
+    app.on('select-client-certificate', handleCert);
+    win.loadURL(url)
+      .then(async () => {
+        const html = await win.webContents.executeJavaScript('document.body.innerHTML');
+        win.destroy();
+        app.off('select-client-certificate', handleCert);
+        resolve(html);
+      })
+      .catch((err) => {
+        win.destroy();
+        app.off('select-client-certificate', handleCert);
+        reject(err);
+      });
+  });
+}
+app.get('/api/namemc/trending', async (req, res) => {
+  const category = req.query.category || 'popular';
+  const time = req.query.time || 'day';
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = 8;
+  const skinsPerWebPage = 30;
+  if (category === 'random') {
+    try {
+      const html = await scrapeUrlViaElectron('https://namemc.com/minecraft-skins/random');
+      const regex = /\/skin\/([a-f0-9]{16})/g;
+      let match;
+      const hashes = new Set();
+      while ((match = regex.exec(html)) !== null) {
+        hashes.add(match[1]);
+      }
+      const arr = Array.from(hashes);
+      let shuffled = arr.sort(() => 0.5 - Math.random()).slice(0, pageSize);
+      let list = shuffled.map((hash) => {
+        const rank = Math.floor(Math.random() * 10000) + 1;
+        return {
+          id: hash,
+          name: `#${rank}`,
+          previewUrl: `https://mc-heads.net/player/${hash}/150.png`,
+          downloadUrl: `https://namemc.com/texture/${hash}.png`
+        };
+      });
+      return res.json(list);
+    } catch (err) {
+      console.error('Failed to fetch random skins:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+  const globalStartIndex = (page - 1) * pageSize;
+  const targetWebPage = Math.floor(globalStartIndex / skinsPerWebPage) + 1;
+  const webStartIndex = globalStartIndex % skinsPerWebPage;
+  function getUrlForPageIndex(idx) {
+    let url = 'https://namemc.com/minecraft-skins/';
+    if (category === 'popular') {
+      if (time === 'day') {
+        url += `trending/daily?page=${idx}`;
+      } else if (time === 'week') {
+        url += `trending/weekly?page=${idx}`;
+      } else if (time === 'month') {
+        url += `trending/monthly?page=${idx}`;
+      } else {
+        url = `https://namemc.com/minecraft-skins/popular?page=${idx}`;
+      }
+    } else if (category === 'new') {
+      url += `new?page=${idx}`;
+    }
+    return url;
+  }
+  function parseSkinsFromHtml(html, startRankIndex) {
+    const regex = /\/skin\/([a-f0-9]{16})/g;
+    let match;
+    const hashes = new Set();
+    while ((match = regex.exec(html)) !== null) {
+      hashes.add(match[1]);
+    }
+    const arr = Array.from(hashes);
+    return arr.map((hash, index) => {
+      const rank = startRankIndex + index + 1;
+      return {
+        id: hash,
+        name: `#${rank}`,
+        previewUrl: `https://mc-heads.net/player/${hash}/150.png`,
+        downloadUrl: `https://namemc.com/texture/${hash}.png`
+      };
+    });
+  }
+  try {
+    let list = [];
+    let currentPageIndex = targetWebPage;
+    while (list.length < webStartIndex + pageSize) {
+      const pageUrl = getUrlForPageIndex(currentPageIndex);
+      const html = await scrapeUrlViaElectron(pageUrl);
+      const startRankIndex = (currentPageIndex - 1) * skinsPerWebPage;
+      const pageSkins = parseSkinsFromHtml(html, startRankIndex);
+      list = list.concat(pageSkins);
+      if (pageSkins.length === 0) break;
+      currentPageIndex++;
+    }
+    list = list.slice(webStartIndex, webStartIndex + pageSize);
+    res.json(list);
+  } catch (err) {
+    console.error('Failed to fetch skins:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+app.get('/api/namemc/texture/:hash', async (req, res) => {
+  try {
+    const { hash } = req.params;
+    const response = await fetch(`https://namemc.com/texture/${hash}.png`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+    if (!response.ok) return res.status(404).send('Texture not found');
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.send(buffer);
+  } catch (err) {
+    console.error('Failed to proxy NameMC texture:', err);
+    res.status(500).send(err.message);
+  }
+});
+app.get('/api/namemc/search', async (req, res) => {
+  const { username } = req.query;
+  if (!username) {
+    return res.status(400).json({ error: 'Username parameter is required.' });
+  }
+  try {
+    const mojangRes = await fetch(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(username)}`);
+    if (mojangRes.status === 204 || mojangRes.status === 404) {
+      return res.status(404).json({ error: 'Player not found.' });
+    }
+    if (!mojangRes.ok) {
+      throw new Error(`Mojang API error: ${mojangRes.statusText}`);
+    }
+    const data = await mojangRes.json();
+    res.json({
+      username: data.name,
+      uuid: data.id,
+      previewUrl: `https://mc-heads.net/body/${data.name}/150.png`,
+      downloadUrl: `https://mc-heads.net/skin/${data.name}`
+    });
+  } catch (err) {
+    console.error('Failed to search player skin:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+app.post('/api/namemc/import', async (req, res) => {
+  const { name, variant, url } = req.body;
+  if (!name || !url) {
+    return res.status(400).json({ error: 'Name and URL are required.' });
+  }
+  const activeAcc = getActiveAccount();
+  const playerUuid = activeAcc ? activeAcc.uuid : 'guest';
+  try {
+    const pngRes = await fetch(url);
+    if (!pngRes.ok) {
+      throw new Error(`Failed to download skin file: ${pngRes.statusText}`);
+    }
+    const fileBuffer = Buffer.from(await pngRes.arrayBuffer());
+    if (!fs.existsSync(skinsDir)) {
+      fs.mkdirSync(skinsDir, { recursive: true });
+    }
+    const filename = `skin_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.png`;
+    const filePath = path.join(skinsDir, filename);
+    fs.writeFileSync(filePath, fileBuffer);
+    const skins = readSkinsDB();
+    const newSkin = {
+      id: 'skin_' + Date.now() + '_' + Math.round(Math.random() * 1000),
+      playerUuid,
+      name,
+      filename,
+      variant: (variant === 'slim') ? 'slim' : 'classic',
+      createdAt: new Date().toISOString()
+    };
+    skins.push(newSkin);
+    writeSkinsDB(skins);
+    const filtered = skins.filter(s => s.playerUuid === playerUuid);
+    const mapped = filtered.map(s => ({
+      ...s,
+      url: `/skins/${s.filename}`
+    }));
+    res.json({
+      success: true,
+      message: 'Skin successfully imported to your project!',
+      skins: mapped
+    });
+  } catch (err) {
+    console.error('Failed to import skin:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 app.get('/api/skins', (req, res) => {
   const activeAcc = getActiveAccount();
   const playerUuid = activeAcc ? activeAcc.uuid : 'guest';

@@ -76,6 +76,10 @@
           <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
           <span>CAPES GALLERY</span>
         </button>
+        <button class="nav-item" id="tab-namemc">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <span>NAMEMC</span>
+        </button>
         <button class="nav-item" id="tab-upload">
           <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
           <span>UPLOAD SKIN</span>
@@ -83,7 +87,7 @@
       </nav>
 
       <div class="sidebar-footer">
-        <span>v1.0.1</span>
+        <span>v1.0.2</span>
       </div>
     </aside>
 
@@ -118,6 +122,60 @@
             <div class="empty-icon">🛡️</div>
             <h3>No capes found</h3>
             <p>Log in with a Premium account containing Minecraft capes to display them here.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-section hidden" id="section-namemc">
+        <div class="section-header">
+          <h2>NAMEMC LOOKUP & SKINS</h2>
+          <span class="section-desc">Search premium player skins or browse popular skin designs.</span>
+        </div>
+
+        <div class="namemc-search-bar glass-panel">
+          <input type="text" id="namemc-search-input" placeholder="Search Minecraft skin by player username...">
+          <button class="glass-btn" id="namemc-search-btn">SEARCH</button>
+        </div>
+
+        <div id="namemc-search-result"></div>
+
+        <div class="namemc-layout">
+          <!-- Left filters side menu -->
+          <div class="namemc-sidebar glass-panel">
+            <div class="sidebar-section">
+              <div class="sidebar-section-title">CATEGORIES</div>
+              <button class="namemc-side-btn active" data-category="popular">Trending</button>
+              <button class="namemc-side-btn" data-category="new">New</button>
+              <button class="namemc-side-btn" data-category="random">Random</button>
+            </div>
+            
+            <div class="sidebar-section" id="namemc-time-filters">
+              <div class="sidebar-section-title">PERIOD</div>
+              <button class="namemc-time-btn active" data-time="day">Daily</button>
+              <button class="namemc-time-btn" data-time="week">Weekly</button>
+              <button class="namemc-time-btn" data-time="month">Monthly</button>
+            </div>
+          </div>
+          
+          <!-- Right main content page -->
+          <div class="namemc-content-area">
+            <div class="namemc-toolbar">
+              <div class="namemc-pagination">
+                <button class="pag-btn" id="namemc-prev-page" disabled>&lt;</button>
+                <span class="pag-current" id="namemc-current-page">Page 1</span>
+                <button class="pag-btn" id="namemc-next-page">&gt;</button>
+              </div>
+            </div>
+
+            <div class="skins-grid-container">
+              <div class="skins-grid" id="namemc-trending-grid"></div>
+              
+              <div class="empty-state hidden" id="namemc-trending-empty-state">
+                <div class="empty-icon">🌐</div>
+                <h3>Failed to load trending skins</h3>
+                <p>Could not fetch skin designs from the repository feed.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

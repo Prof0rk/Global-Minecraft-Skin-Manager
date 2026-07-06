@@ -8,8 +8,8 @@ let mainWindow;
 
 function createMainWindow() {
   mainWindow = new BrowserWindow({
-    width: 1150,
-    height: 750,
+    width: 1400,
+    height: 850,
     minWidth: 950,
     minHeight: 650,
     title: 'Global Minecraft Skin Manager',

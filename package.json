@@ -1,6 +1,6 @@
 {
   "name": "global-minecraft-skin-manager",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Premium Minecraft skin manager with liquid glass pixel white UI",
   "main": "main.js",
   "scripts": {

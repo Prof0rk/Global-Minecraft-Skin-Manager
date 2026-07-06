@@ -9,6 +9,17 @@ const skinsGrid = document.getElementById('skins-grid');
 const skinsEmptyState = document.getElementById('skins-empty-state');
 const capesGrid = document.getElementById('capes-grid');
 const capesEmptyState = document.getElementById('capes-empty-state');
+const tabNamemc = document.getElementById('tab-namemc');
+const sectionNamemc = document.getElementById('section-namemc');
+const namemcSearchInput = document.getElementById('namemc-search-input');
+const namemcSearchBtn = document.getElementById('namemc-search-btn');
+const namemcSearchResult = document.getElementById('namemc-search-result');
+const namemcTrendingGrid = document.getElementById('namemc-trending-grid');
+const namemcTrendingEmptyState = document.getElementById('namemc-trending-empty-state');
+const namemcPrevPage = document.getElementById('namemc-prev-page');
+const namemcNextPage = document.getElementById('namemc-next-page');
+const namemcCurrentPage = document.getElementById('namemc-current-page');
+const namemcTimeFilters = document.getElementById('namemc-time-filters');
 const uploadForm = document.getElementById('upload-skin-form');
 const fileInput = document.getElementById('skin-file-input');
 const dropZone = document.getElementById('drop-zone');
@@ -72,9 +83,11 @@ async function isElectronPlatform() {
 tabGallery.addEventListener('click', () => {
   tabGallery.classList.add('active');
   tabCapes.classList.remove('active');
+  tabNamemc.classList.remove('active');
   tabUpload.classList.remove('active');
   sectionGallery.classList.remove('hidden');
   sectionCapes.classList.add('hidden');
+  sectionNamemc.classList.add('hidden');
   sectionUpload.classList.add('hidden');
   if (selectedSkin) {
     previewPanel.classList.remove('hidden');
@@ -84,20 +97,36 @@ tabGallery.addEventListener('click', () => {
 tabCapes.addEventListener('click', () => {
   tabCapes.classList.add('active');
   tabGallery.classList.remove('active');
+  tabNamemc.classList.remove('active');
   tabUpload.classList.remove('active');
   sectionCapes.classList.remove('hidden');
   sectionGallery.classList.add('hidden');
+  sectionNamemc.classList.add('hidden');
   sectionUpload.classList.add('hidden');
   previewPanel.classList.add('hidden');
   renderCapes();
+});
+tabNamemc.addEventListener('click', () => {
+  tabNamemc.classList.add('active');
+  tabGallery.classList.remove('active');
+  tabCapes.classList.remove('active');
+  tabUpload.classList.remove('active');
+  sectionNamemc.classList.remove('hidden');
+  sectionGallery.classList.add('hidden');
+  sectionCapes.classList.add('hidden');
+  sectionUpload.classList.add('hidden');
+  previewPanel.classList.add('hidden');
+  loadNamemcTrending();
 });
 tabUpload.addEventListener('click', () => {
   tabUpload.classList.add('active');
   tabGallery.classList.remove('active');
   tabCapes.classList.remove('active');
+  tabNamemc.classList.remove('active');
   sectionUpload.classList.remove('hidden');
   sectionGallery.classList.add('hidden');
   sectionCapes.classList.add('hidden');
+  sectionNamemc.classList.add('hidden');
   previewPanel.classList.add('hidden');
 });
 ['dragenter', 'dragover'].forEach(eventName => {
@@ -207,15 +236,15 @@ function drawSkin2D(canvas, imageUrl, isSlim) {
     ctx.webkitImageSmoothingEnabled = false;
     const xOff = 22;
     const yOff = 9;
-    ctx.drawImage(img, 0, 20, 4, 12, xOff + (4 * scale), yOff + (20 * scale), 4 * scale, 12 * scale);
+    ctx.drawImage(img, 4, 20, 4, 12, xOff + (4 * scale), yOff + (20 * scale), 4 * scale, 12 * scale);
     if (!isOldLayout) {
-      ctx.drawImage(img, 0, 36, 4, 12, xOff + (4 * scale), yOff + (20 * scale), 4 * scale, 12 * scale);
+      ctx.drawImage(img, 4, 36, 4, 12, xOff + (4 * scale), yOff + (20 * scale), 4 * scale, 12 * scale);
     }
     if (isOldLayout) {
-      ctx.drawImage(img, 0, 20, 4, 12, xOff + (8 * scale), yOff + (20 * scale), 4 * scale, 12 * scale);
+      ctx.drawImage(img, 4, 20, 4, 12, xOff + (8 * scale), yOff + (20 * scale), 4 * scale, 12 * scale);
     } else {
-      ctx.drawImage(img, 16, 48, 4, 12, xOff + (8 * scale), yOff + (20 * scale), 4 * scale, 12 * scale);
-      ctx.drawImage(img, 0, 48, 4, 12, xOff + (8 * scale), yOff + (20 * scale), 4 * scale, 12 * scale);
+      ctx.drawImage(img, 20, 52, 4, 12, xOff + (8 * scale), yOff + (20 * scale), 4 * scale, 12 * scale);
+      ctx.drawImage(img, 4, 52, 4, 12, xOff + (8 * scale), yOff + (20 * scale), 4 * scale, 12 * scale);
     }
     ctx.drawImage(img, 20, 20, 8, 12, xOff + (4 * scale), yOff + (8 * scale), 8 * scale, 12 * scale);
     if (!isOldLayout) {
@@ -223,15 +252,15 @@ function drawSkin2D(canvas, imageUrl, isSlim) {
     }
     const armW = isSlim ? 3 : 4;
     const armXOff = isSlim ? 1 : 0;
-    ctx.drawImage(img, 40, 20, 4, 12, xOff + (4 * scale) - (armW * scale), yOff + (8 * scale), armW * scale, 12 * scale);
+    ctx.drawImage(img, 44, 20, 4, 12, xOff + (4 * scale) - (armW * scale), yOff + (8 * scale), armW * scale, 12 * scale);
     if (!isOldLayout) {
-      ctx.drawImage(img, 40, 36, 4, 12, xOff + (4 * scale) - (armW * scale), yOff + (8 * scale), armW * scale, 12 * scale);
+      ctx.drawImage(img, 44, 36, 4, 12, xOff + (4 * scale) - (armW * scale), yOff + (8 * scale), armW * scale, 12 * scale);
     }
     if (isOldLayout) {
-      ctx.drawImage(img, 40, 20, 4, 12, xOff + (12 * scale) - armXOff, yOff + (8 * scale), armW * scale, 12 * scale);
+      ctx.drawImage(img, 44, 20, 4, 12, xOff + (12 * scale) - armXOff, yOff + (8 * scale), armW * scale, 12 * scale);
     } else {
-      ctx.drawImage(img, 32, 48, 4, 12, xOff + (12 * scale) - armXOff, yOff + (8 * scale), armW * scale, 12 * scale);
-      ctx.drawImage(img, 48, 48, 4, 12, xOff + (12 * scale) - armXOff, yOff + (8 * scale), armW * scale, 12 * scale);
+      ctx.drawImage(img, 36, 52, 4, 12, xOff + (12 * scale) - armXOff, yOff + (8 * scale), armW * scale, 12 * scale);
+      ctx.drawImage(img, 52, 52, 4, 12, xOff + (12 * scale) - armXOff, yOff + (8 * scale), armW * scale, 12 * scale);
     }
     ctx.drawImage(img, 8, 8, 8, 8, xOff + (4 * scale), yOff, 8 * scale, 8 * scale);
     ctx.drawImage(img, 40, 8, 8, 8, xOff + (4 * scale), yOff, 8 * scale, 8 * scale);
@@ -780,6 +809,162 @@ function escapeHTML(str) {
     }[tag] || tag)
   );
 }
+let namemcTrendingSkins = [];
+let namemcCategory = 'popular';
+let namemcTime = 'day';
+let namemcPage = 1;
+const sideButtons = document.querySelectorAll('.namemc-side-btn');
+const timeButtons = document.querySelectorAll('.namemc-time-btn');
+sideButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    sideButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    namemcCategory = btn.dataset.category;
+    namemcPage = 1;
+    if (namemcCategory === 'popular') {
+      namemcTimeFilters.classList.remove('hidden');
+    } else {
+      namemcTimeFilters.classList.add('hidden');
+    }
+    updatePaginatorUI();
+    loadNamemcTrending();
+  });
+});
+timeButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    timeButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    namemcTime = btn.dataset.time;
+    namemcPage = 1;
+    updatePaginatorUI();
+    loadNamemcTrending();
+  });
+});
+namemcPrevPage.addEventListener('click', () => {
+  if (namemcPage > 1) {
+    namemcPage--;
+    updatePaginatorUI();
+    loadNamemcTrending();
+  }
+});
+namemcNextPage.addEventListener('click', () => {
+  namemcPage++;
+  updatePaginatorUI();
+  loadNamemcTrending();
+});
+function updatePaginatorUI() {
+  namemcCurrentPage.textContent = `Page ${namemcPage}`;
+  namemcPrevPage.disabled = (namemcPage <= 1);
+  if (namemcCategory === 'random') {
+    namemcPrevPage.disabled = true;
+    namemcNextPage.disabled = true;
+    namemcCurrentPage.textContent = 'Randomizer';
+  } else {
+    namemcNextPage.disabled = false;
+  }
+}
+async function loadNamemcTrending() {
+  namemcTrendingGrid.innerHTML = '<div class="profile-loading" style="grid-column: 1/-1; text-align: center;">LOADING SKINS...</div>';
+  namemcTrendingEmptyState.classList.add('hidden');
+  try {
+    const res = await fetch(`/api/namemc/trending?category=${namemcCategory}&time=${namemcTime}&page=${namemcPage}`);
+    if (!res.ok) throw new Error('Failed to load skins from database');
+    namemcTrendingSkins = await res.json();
+    renderNamemcTrending();
+  } catch (err) {
+    namemcTrendingGrid.innerHTML = '';
+    namemcTrendingEmptyState.classList.remove('hidden');
+  }
+}
+function renderNamemcTrending() {
+  namemcTrendingGrid.innerHTML = '';
+  if (namemcTrendingSkins.length === 0) {
+    namemcTrendingEmptyState.classList.remove('hidden');
+    return;
+  }
+  namemcTrendingSkins.forEach(skin => {
+    const card = document.createElement('div');
+    card.className = 'skin-card';
+    card.innerHTML = `
+      <div class="skin-card-canvas-container">
+        <canvas class="skin-card-canvas" width="80" height="110"></canvas>
+      </div>
+      <div class="skin-name">${escapeHTML(skin.name)}</div>
+      <div class="skin-card-actions" style="opacity: 1;">
+        <button class="glass-btn import-btn" data-id="${skin.id}" style="width: 100%;">UPLOAD TO GALLERY</button>
+      </div>
+    `;
+    const importBtn = card.querySelector('.import-btn');
+    importBtn.addEventListener('click', () => importSkin(skin.name, skin.downloadUrl));
+    namemcTrendingGrid.appendChild(card);
+    const canvas = card.querySelector('.skin-card-canvas');
+    drawSkin2D(canvas, `/api/namemc/texture/${skin.id}`, false);
+  });
+}
+async function searchNamemcPlayer() {
+  const username = namemcSearchInput.value.trim();
+  if (!username) {
+    showToast('Please enter a username to search.', 'error');
+    return;
+  }
+  namemcSearchResult.innerHTML = '<div class="profile-loading" style="text-align: center; padding: 20px;">LOOKING UP PLAYER PROFILE...</div>';
+  try {
+    const res = await fetch(`/api/namemc/search?username=${encodeURIComponent(username)}`);
+    if (!res.ok) {
+      if (res.status === 404) {
+        throw new Error('Player profile not found.');
+      }
+      throw new Error('Mojang API lookup failed.');
+    }
+    const player = await res.json();
+    namemcSearchResult.innerHTML = `
+      <div class="namemc-player-card glass-panel">
+        <div class="namemc-player-card-image">
+          <img src="${player.previewUrl}" alt="${player.username}">
+        </div>
+        <div class="namemc-player-card-info">
+          <div class="namemc-player-card-name">${escapeHTML(player.username)}</div>
+          <div class="namemc-player-card-details">Active skin texture verified on official Mojang servers.</div>
+          <button class="glass-btn namemc-import-btn">UPLOAD TO GALLERY</button>
+        </div>
+      </div>
+    `;
+    const importBtn = namemcSearchResult.querySelector('.namemc-import-btn');
+    importBtn.addEventListener('click', () => importSkin(`${player.username}'s Skin`, player.downloadUrl));
+  } catch (err) {
+    namemcSearchResult.innerHTML = `
+      <div class="glass-panel" style="padding: 20px; text-align: center; color: var(--accent-red); font-family: var(--font-pixel); font-size: 11px;">
+        ${escapeHTML(err.message)}
+      </div>
+    `;
+  }
+}
+async function importSkin(name, url) {
+  showToast(`Importing skin: ${name}...`, 'info');
+  try {
+    const res = await fetch('/api/namemc/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, variant: 'classic', url })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to import skin file.');
+    }
+    const data = await res.json();
+    skins = data.skins;
+    renderSkins();
+    showToast(`Skin "${name}" successfully added to your project!`, 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+namemcSearchBtn.addEventListener('click', searchNamemcPlayer);
+namemcSearchInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    searchNamemcPlayer();
+  }
+});
 document.addEventListener('DOMContentLoaded', () => {
   init3DSkinViewer();
   fetchSkins();
